@@ -3,8 +3,8 @@ import pymongo, ssl
 class Database:
     def __init__(self, connection_string):
         self.mongo_db = pymongo.MongoClient(connection_string, ssl=True, ssl_cert_reqs= ssl.CERT_NONE)
-        self.user_database = self.client['user']
-        self.bots_database = self.client['bots']
+        self.user_database = self.mongo_db['user']
+        self.bots_database = self.mongo_db['bots']
 
     def create_user(self, username: str, password: str, grade: str):
         if not self.user_database['credential'].find_one({'username': username}):
