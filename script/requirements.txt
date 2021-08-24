@@ -1,7 +1,0 @@
-pyfade
-pymongo
-xtelnet
-requests
-colorama
-paramiko
-dnspython
