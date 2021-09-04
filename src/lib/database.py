@@ -9,6 +9,7 @@ class Database:
         # temp session storage
         self.online_user = []
         self.online_loader = []
+        self.online_zombie = []
 
         self.total_telnet_bots = 0
         self.total_ssh_bots = 0

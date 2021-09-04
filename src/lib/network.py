@@ -1,9 +1,23 @@
 import socket
 
+class Port:
+    def __init__(self):
+        pass
+
+    def check_open(self, ip: str, port: int, timeout: float= 1):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        
+        try:
+            sock.connect((ip, port))
+            return True
+        except:
+            return False
+
 class Network:
     def __init__(self, socket_session: socket.socket):
         self.sock = socket_session
-    
+
     def close_socket(self):
         self.sock.close()
 
@@ -19,6 +33,13 @@ class Network:
         for packet in packets:
             packet = f'\r\033[0m{packet}\n'
 
+            res = self.send_packet(packet)
+        
+        return res
+    
+    def raw_packet_list_send(self, packets):
+        res = None
+        for packet in packets:
             res = self.send_packet(packet)
         
         return res

