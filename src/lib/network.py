@@ -24,11 +24,16 @@ class Network:
         return res
 
     def recv_packet(self):
-        try:
-            data = self.sock.recv(1024).decode('utf-8').strip().split('\n')[0]
-        
-            if data not in ['']:
-                return data
+        # Optimization ?
+        data = None
+        while True:
+            try:
+                data = self.sock.recv(1024).decode('utf-8').strip().split('\n')[0]
+                if data not in ['\n', '', 'None', None, False, 'False']:
+                    break
 
-        except:
-            return False
+            except Exception:
+                data = False
+                break
+
+        return data
