@@ -69,7 +69,7 @@ chmod +x ./script/*.sh
 ```py
 import socket, threading, time
 
-def method_name(ip: str, timeout: str, thread: str):
+def method_name(ip: str, port: str, timeout: str):
     def flood(ip: str, port: int, timeout: int):
         start_time = int(time.time())
 
