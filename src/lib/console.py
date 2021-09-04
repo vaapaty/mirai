@@ -1,5 +1,6 @@
 from colorama import Fore, Style, init; init()
-import os, threading
+from terminaltables import DoubleTable
+import os, threading, math
 
 class Color:
     def __init__(self):
@@ -21,10 +22,19 @@ class Color:
     def rgb(self, r: int, g: int, b: int):
         return '\033[38;2;<r>;<g>;<b>m'.replace('<r>', str(r)).replace('<g>', str(g)).replace('<b>', str(b))
 
-    def fade(self, text: str):
+    def custom_fade(self, text: str):
         final = ''
         for char in text:
             final += f'{self.rgb(200, 60, len(final) + 12)}{char}'
+        
+        return final
+    
+    def fade(self, text: str):
+        final = ''
+        i= 0
+        for char in text:
+            i+=8
+            final += f'{self.rgb(200, 60, i)}{char}'
         
         return final
 
@@ -41,7 +51,7 @@ class Console:
         self.locker.release()
 
     def __format_text(self, text: str):
-        return text.replace('->', f'{Fore.LIGHTCYAN_EX}->{Fore.RESET}').replace(':', f'{Fore.YELLOW}:{Fore.RESET}').replace('Error', f'{Fore.RED}Error{Fore.RESET}').replace('Invalid', f'{Fore.MAGENTA}Invalid{Fore.RESET}').replace('"', f'{Fore.BLUE}"{Fore.RESET}').replace('killed', f'{Fore.LIGHTRED_EX}killed{Fore.RESET}')
+        return text.replace('->', f'{Fore.LIGHTCYAN_EX}->{Fore.RESET}').replace(':', f'{Fore.YELLOW}:{Fore.RESET}').replace('Error', f'{Fore.RED}Error{Fore.RESET}').replace('Invalid', f'{Fore.MAGENTA}Invalid{Fore.RESET}').replace('"', f'{Fore.LIGHTBLUE_EX}"{Fore.RESET}').replace('killed', f'{Fore.LIGHTRED_EX}killed{Fore.RESET}')
 
     def loader_banner(self):
         self.clear()
@@ -81,3 +91,19 @@ class Console:
     
     def print_info(self, text: str):
         self.__lock_print(self.__format_text(text), 'INFO', Fore.LIGHTYELLOW_EX)
+    
+    def get_table(self, name: str, emoji: str, items: list):
+        data = ''
+
+        for item in sorted(items, key=len, reverse= True):
+            data += f'{item}\n'
+
+        return DoubleTable([[f'{emoji} {name} ({len(items)}) {emoji}'], [data.strip()]]).table
+    
+    def get_table_fade(self, name: str, emoji: str, items: list):
+        data  = []
+
+        for line in self.get_table(name, emoji, items).split('\n'):
+            data.append('  ' + Color().fade(line.split('\n')[0]))
+                    
+        return data

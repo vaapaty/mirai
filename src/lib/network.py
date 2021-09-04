@@ -1,4 +1,4 @@
-import socket
+import socket, time
 
 class Port:
     def __init__(self):
@@ -41,6 +41,7 @@ class Network:
         res = None
         for packet in packets:
             res = self.send_packet(packet)
+            time.sleep(0.5)
         
         return res
 
