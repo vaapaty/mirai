@@ -3,7 +3,7 @@
 <p align='center'>
     <b>Self spreading Botnet based on Mirai C&C Arch, spreading through SSH and Telnet protocol.<br>Modern script fullly written in python3.</b><br>
     <br>
-    <img src='https://media.discordapp.net/attachments/878090550564241439/878787633621401630/unknown.png'>
+    <img src='https://media.discordapp.net/attachments/874135965378166835/883651117475582003/unknown.png'>
 </p>
 
 ----
@@ -21,8 +21,9 @@
 
 * A **Brain**, *yes skiddie, you need to use your brain, but d'ont worry because [Google](https://giybf.com) is your best friend !*
 * A [MongoDB](https://mongodb.com) account, you must create an **cluster** with **database**, show [tutorial](https://docs.atlas.mongodb.com/getting-started/).
+* A [Ngrok](https://ngrok.com) account, (save your **api-key**)
+* __3__ Open port. Default: **8080**, **1337**, **667**
 * VPS with __Debian__ based distribution.
-* __2__ Open port. Default: **8080**, **1337**
 * Time..
 
 <br>
