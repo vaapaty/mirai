@@ -104,3 +104,11 @@ class Console:
             data.append('  ' + Color().fade(line.split('\n')[0]))
                     
         return data
+    
+    def bulk_fade(self, items: list):
+        i= 0
+        for item in items:
+            items[i] = Color().fade(item)
+            i+=1
+        
+        return items

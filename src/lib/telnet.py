@@ -24,6 +24,8 @@ class Telnet:
     def connect(self, timeout= 5, callback= False):
         try:
             self.session.connect(self.ip, self.username, self.password, self.port, timeout)
+            r = self.session.execute('ls')
+            print(f'ls: {r}')
             return True
         except Exception as e:
             if callback:
