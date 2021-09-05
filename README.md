@@ -3,7 +3,7 @@
 <p align='center'>
     <b>Self spreading Botnet based on Mirai C&C Arch, spreading through SSH and Telnet protocol.<br>Modern script fullly written in python3.</b><br>
     <br>
-    <img src='https://media.discordapp.net/attachments/882441218183807067/883772504760533022/unknown.png'>
+    <img src='https://media.discordapp.net/attachments/883871285808099329/884117319448682566/unknown.png'>
 </p>
 
 ----
