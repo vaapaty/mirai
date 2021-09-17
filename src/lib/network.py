@@ -1,4 +1,15 @@
-import socket, time
+import socket, time, threading, functools, http.server, socketserver
+
+class FileServer(threading.Thread):
+    def __init__(self, port: int):
+        # Todo: Disable logs and put them to file, if anyone know how to make that, make pull requests^^
+        self.handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory= '../bin/')
+        threading.Thread.__init__(self)
+        self.port = port
+   
+    def run(self):
+        with socketserver.TCPServer(('0.0.0.0', self.port), self.handler) as httpd:
+            httpd.serve_forever()
 
 class Port:
     def __init__(self):

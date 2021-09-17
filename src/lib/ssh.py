@@ -20,9 +20,13 @@ class Ssh:
     def disconnect(self):
         self.session.close()
 
-    def connect(self, timeout= 5):
+    def connect(self, timeout= 5, callback: bool= False):
         try:
             self.session.connect(self.ip, port = self.port, username= self.username, password= self.password, timeout= timeout)
             return True
-        except:
+        except Exception as e:
+            if callback:
+                if 'Authentication failed' not in str(e):
+                    return 'error'
+
             return False

