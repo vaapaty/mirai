@@ -30,6 +30,8 @@
 
 > # How to setup.
 
+for the moment you can use that: [https://github.com/Its-Vichy/Mirkat](https://github.com/Its-Vichy/Mirkat)
+
 * *Change the permissions of the scripts with the chmod command.*
 ```sh
 chmod +x ./script/*.sh
